@@ -1,0 +1,103 @@
+/* ==========================================================
+   MeetHub – tema sobre Bootstrap 5 (local: assets/vendor)
+   UNA sola hoja de estilos para todo el sitio. Los colores salen de los
+   mockups; si el diseño cambia, se cambia SOLO en las variables de :root.
+   Regla del equipo: primero clases de Bootstrap; aquí solo lo que Bootstrap no trae.
+   ========================================================== */
+:root {
+  --mh-navy: #2b3e50;
+  --mh-brown: #4a3525;
+  --mh-brown-dark: #3a291b;
+  --mh-brown-text: #7a4e2d;
+  --mh-bg: #f0ece6;
+  --mh-tint: #efe6dd;
+  --mh-border: #ece6df;
+  --mh-green: #2e7d32;
+  --mh-red: #c62828;
+}
+body { background: var(--mh-bg); color: var(--mh-navy); font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; font-size: .925rem; }
+a { color: var(--mh-brown); }
+a:hover { color: var(--mh-brown-dark); }
+.mh-ico { vertical-align: -3px; flex-shrink: 0; }
+
+/* ---------- Navbar ---------- */
+.mh-navbar { background: var(--mh-navy); padding-top: .55rem; padding-bottom: .55rem; }
+.mh-navbar .navbar-brand { font-size: 1.1rem; color: #fff; }
+.mh-navbar .navbar-nav .nav-link { color: #fff; font-size: .8rem; font-weight: 500; border-radius: .4rem; padding: .45rem .7rem; white-space: nowrap; }
+.mh-navbar .navbar-nav .nav-link:hover { background: rgba(255,255,255,.12); color: #fff; }
+.mh-navbar .navbar-nav .nav-link.active { background: var(--mh-tint); color: var(--mh-navy); font-weight: 600; }
+.mh-navbar .dropdown-item.active, .mh-navbar .dropdown-item:active { background: var(--mh-brown); color: #fff; }
+
+/* ---------- Botones ---------- */
+.btn-mh { background: var(--mh-brown); border-color: var(--mh-brown); color: #fff; font-weight: 600; }
+.btn-mh:hover, .btn-mh:focus { background: var(--mh-brown-dark); border-color: var(--mh-brown-dark); color: #fff; }
+.btn-mh-outline { background: #fff; border: 1px solid var(--mh-brown); color: var(--mh-brown); font-weight: 600; }
+.btn-mh-outline:hover, .btn-mh-outline.active { background: var(--mh-tint); color: var(--mh-brown-dark); border-color: var(--mh-brown); }
+.btn-mh-borde { background: transparent; border: 1px solid rgba(255,255,255,.7); color: #fff; font-weight: 500; }
+.btn-mh-borde:hover, .btn-mh-borde:focus { background: rgba(255,255,255,.12); color: #fff; }
+.btn-mh-navy { background: var(--mh-navy); border-color: var(--mh-navy); color: #fff; font-weight: 600; }
+.btn-mh-navy:hover { background: #1f2f3d; color: #fff; }
+.btn-mh-ok { background: var(--mh-green); border-color: var(--mh-green); color: #fff; font-weight: 600; }
+.btn-mh-ok:hover { background: #256528; color: #fff; }
+.btn-mh-danger { background: #fff; border: 1px solid var(--mh-red); color: var(--mh-red); font-weight: 600; }
+.btn-mh-danger:hover { background: var(--mh-red); color: #fff; }
+
+/* ---------- Tarjetas y textos ---------- */
+.mh-card { background: #fff; border: 1px solid var(--mh-border); border-radius: .6rem; box-shadow: 0 1px 2px rgba(43,62,80,.05); }
+.mh-tint { background: var(--mh-tint); border-radius: .5rem; }
+.mh-title { color: var(--mh-navy); font-weight: 700; }
+.mh-eyebrow { color: var(--mh-brown-text); font-size: .65rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.mh-muted-brown { color: var(--mh-brown-text); }
+.mh-icon { color: var(--mh-brown); }
+.mh-label { font-weight: 600; font-size: .78rem; margin-bottom: .25rem; color: var(--mh-navy); }
+.mh-img { width: 100%; object-fit: cover; border-radius: .5rem; background: var(--mh-tint); }
+.mh-placeholder-img { background: var(--mh-bg); border: 1px solid var(--mh-border); border-radius: .5rem; color: var(--mh-brown-text); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 180px; gap: .5rem; font-size: .8rem; }
+.mh-sala-card { transition: box-shadow .15s; }
+.mh-sala-card:hover { box-shadow: 0 4px 14px rgba(43,62,80,.12); }
+.mh-sala-card.sel { border: 2px solid var(--mh-navy); }
+.mh-cuerpo { max-width: 1180px; margin-inline: auto; }
+.mh-cuerpo-sm { max-width: 960px; margin-inline: auto; }
+
+/* ---------- Estatus (reservas y disponibilidad) ---------- */
+.mh-badge { display: inline-block; padding: .25rem .65rem; border-radius: .35rem; font-size: .7rem; font-weight: 600; background: var(--mh-tint); color: var(--mh-brown); }
+.mh-badge-pendiente { background: #efe3d3; color: #5a4632; border: 1px dashed #8a6b4a; }
+.mh-badge-aprobada, .mh-badge-realizada { background: var(--mh-green); color: #fff; }
+.mh-badge-rechazada { background: var(--mh-red); color: #fff; }
+.mh-badge-cancelada { background: #a12a2a; color: #fff; }
+.mh-badge-activo { background: var(--mh-green); color: #fff; }
+.mh-badge-baja { background: #8d8d8d; color: #fff; }
+.mh-disp { display: inline-block; min-width: 92px; padding: .3rem .6rem; border-radius: .35rem; font-size: .7rem; font-weight: 700; text-align: center; }
+.mh-disp-libre { background: var(--mh-green); color: #fff; }
+.mh-disp-ocupado { background: var(--mh-red); color: #fff; }
+.mh-disp-pendiente { background: #efe3d3; color: #5a4632; border: 1px dashed #8a6b4a; }
+.mh-disp-fuera { background: #e5e1da; color: #888; }
+
+/* ---------- Tablas y formularios ---------- */
+.mh-tabla thead th { background: var(--mh-tint); color: var(--mh-navy); font-size: .72rem; font-weight: 700; border-bottom: 0; white-space: nowrap; }
+.mh-tabla.oscura thead th { background: var(--mh-navy); color: #fff; }
+.mh-tabla td { font-size: .8rem; vertical-align: middle; }
+.mh-tabla > :not(caption) > * > * { border-color: var(--mh-border); }
+.mh-tabla-pie { background: var(--mh-tint); border-radius: .4rem; font-size: .75rem; font-weight: 600; padding: .55rem .9rem; }
+.form-control, .form-select { background-color: #fff; border-color: #ddd5ca; font-size: .85rem; }
+.form-control:focus, .form-select:focus { border-color: var(--mh-brown); box-shadow: 0 0 0 .2rem rgba(74,53,37,.15); }
+.form-label { font-weight: 600; font-size: .78rem; margin-bottom: .25rem; }
+.mh-tabs .btn { font-weight: 600; font-size: .82rem; }
+.mh-pestanas { border-bottom: 1px solid var(--mh-border); gap: 1.4rem; display: flex; }
+.mh-pestanas a { padding: .5rem 0; font-size: .8rem; font-weight: 600; color: #6b7785; text-decoration: none; border-bottom: 2px solid transparent; }
+.mh-pestanas a.active { color: var(--mh-navy); border-bottom-color: var(--mh-navy); }
+.mh-stat { font-size: 1.5rem; font-weight: 700; line-height: 1.1; }
+.mh-lista { padding-left: 1.1rem; margin: 0; font-size: .82rem; }
+
+/* ---------- Login (vista dividida) ---------- */
+.mh-divisor { border-left: 1px solid var(--mh-border); }
+@media (max-width: 991px) { .mh-divisor { border-left: 0; border-top: 1px solid var(--mh-border); padding-top: 1.5rem; } }
+
+/* ---------- Pie de página ---------- */
+.mh-footer { background: #fff; border-top: 1px solid var(--mh-border); }
+
+/* ---------- Impresión (Exportar PDF desde el navegador) ---------- */
+@media print {
+  .mh-navbar, .mh-footer, .no-print { display: none !important; }
+  body { background: #fff; }
+  .mh-card { border: 0; box-shadow: none; }
+}
