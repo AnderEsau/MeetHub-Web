@@ -6,6 +6,14 @@
 require_once __DIR__ . '/../includes/auth.php';
 requerir_rol(ROL_SOLICITANTE);
 require_once __DIR__ . '/../includes/reservas.php';
+require_once __DIR__ . '/../includes/usuarios.php';
+
+// Antes de reservar, el solicitante debe tener completo su domicilio (se captura en Mi perfil, no en el registro).
+if (!perfil_completo()) {
+    flash_set('danger', 'Para reservar una sala primero completa tu domicilio en Mi perfil.');
+    header('Location: ' . url('usuario/mi_perfil.php'));
+    exit;
+}
 
 $salas = salas_activas();
 $horarios = horarios_activos();

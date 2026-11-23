@@ -31,7 +31,7 @@ $salas = db_todos("SELECT id_sala, nombre_sala FROM tblsalas ORDER BY nombre_sal
 $idSel = (int) ($_GET['id'] ?? 0);
 $sel = null; foreach ($filas as $f) { if ((int) $f['id_reserva'] === $idSel && $f['estado_reserva'] === 'Aprobada') { $sel = $f; } }
 if (!$sel) { foreach ($filas as $f) { if ($f['estado_reserva'] === 'Aprobada') { $sel = $f; break; } } }
-$nA = count(array_filter($filas, fn($f) => $f['estado_reserva'] === 'Aprobada')); $nC = count($filas) - $nA;
+$nA = count(array_filter($filas, function ($f) { return $f['estado_reserva'] === 'Aprobada'; })); $nC = count($filas) - $nA;
 
 $titulo = 'Reservas';
 require_once __DIR__ . '/../includes/header.php';
