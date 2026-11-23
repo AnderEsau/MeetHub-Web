@@ -50,6 +50,15 @@ require_once __DIR__ . '/includes/header.php';
                 </div>
             </form>
         </section>
+
+        <section class="mh-card p-4 mt-3">
+            <h2 class="h6 mh-title mb-3">Contacto directo</h2>
+            <?php $portal = dato_publico('Portal institucional'); $hor = dato_publico('Horario y contacto');
+            foreach ([['phone', 'Teléfono', '(789) 896 2088 · Extensión Biblioteca'], ['mail', 'Correo electrónico', APP_CORREO], ['globe', 'Portal institucional', $portal['contenido'] ?? APP_WEB]] as [$ic, $t, $c]): ?>
+                <div class="d-flex gap-3 mb-2"><span class="mh-icon"><?= icono($ic, 18) ?></span>
+                    <div><div class="fw-bold small"><?= e($t) ?></div><div class="small"><?= e($c) ?></div></div></div>
+            <?php endforeach; ?>
+        </section>
     </div>
 </main>
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
