@@ -119,13 +119,39 @@ function guardar_imagen(string $campo, string $carpeta, ?string &$error = null):
         $error = 'Solo se permiten imágenes JPG, PNG o WEBP.';
         return null;
     }
-    $dir = __DIR__ . '/../uploads/' . $carpeta;
+    $dir = __DIR__ . '/../upload/' . $carpeta;   // misma carpeta 'upload/' que usa la app móvil
     if (!is_dir($dir)) {
         mkdir($dir, 0775, true);
     }
     $nombre = bin2hex(random_bytes(8)) . '.' . $ext;
     move_uploaded_file($f['tmp_name'], $dir . '/' . $nombre);
-    return 'uploads/' . $carpeta . '/' . $nombre;
+    return 'upload/' . $carpeta . '/' . $nombre;
+}
+
+/**
+ * Guarda VARIAS imágenes de un <input type="file" name="campo[]" multiple>. Devuelve las rutas guardadas;
+ * los motivos de rechazo se agregan a $errores. (Se usa para la galería de cada sala.)
+ */
+function guardar_imagenes_multiples(string $campo, string $carpeta, array &$errores): array
+{
+    $rutas = [];
+    if (empty($_FILES[$campo]['name']) || !is_array($_FILES[$campo]['name'])) {
+        return $rutas;
+    }
+    foreach ($_FILES[$campo]['name'] as $i => $nombre) {
+        if ($nombre === '' || $_FILES[$campo]['error'][$i] === UPLOAD_ERR_NO_FILE) {
+            continue;
+        }
+        $_FILES['__una'] = [
+            'name' => $nombre, 'type' => $_FILES[$campo]['type'][$i], 'tmp_name' => $_FILES[$campo]['tmp_name'][$i],
+            'error' => $_FILES[$campo]['error'][$i], 'size' => $_FILES[$campo]['size'][$i],
+        ];
+        $err = null;
+        $r = guardar_imagen('__una', $carpeta, $err);
+        if ($r) { $rutas[] = $r; } elseif ($err) { $errores[] = $nombre . ': ' . $err; }
+    }
+    unset($_FILES['__una']);
+    return $rutas;
 }
 
 /**

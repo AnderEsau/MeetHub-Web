@@ -15,7 +15,7 @@ $idSala = (int) ($_GET['sala'] ?? 0);
 
 $ids = array_column($salas, 'id_sala');
 $salaSel = in_array($idSala, array_map('intval', $ids), true) ? $idSala : 0;
-$mostrar = $salaSel ? array_values(array_filter($salas, fn($s) => (int) $s['id_sala'] === $salaSel)) : $salas;
+$mostrar = $salaSel ? array_values(array_filter($salas, function ($s) use ($salaSel) { return (int) $s['id_sala'] === $salaSel; })) : $salas;
 
 // Destino del botón "Reservar": solicitante -> nueva solicitud; los demás -> login
 require_once __DIR__ . '/includes/auth.php';
