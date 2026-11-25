@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: ' . url('admin/salas_abc.php')); exit;
     }
     if ($accion === 'quitar_img') {
-        if (tabla_existe('tblsala_imagenes')) { db_exec("DELETE FROM tblsala_imagenes WHERE id_imagen = ? AND id_sala = ?", 'ii', (int) ($_POST['id_imagen'] ?? 0), $id); }
+        if (tabla_existe('tblimagenes_sala')) { db_exec("DELETE FROM tblimagenes_sala WHERE id_imagen = ? AND id_sala = ?", 'ii', (int) ($_POST['id_imagen'] ?? 0), $id); }
         flash_set('success', 'Foto eliminada de la galería.');
         header('Location: ' . url('admin/salas_abc.php?editar=' . $id)); exit;
     }
@@ -30,10 +30,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($cap < 1 || $min < 1) { $errores[] = 'La capacidad y el aforo mínimo deben ser números positivos.'; }
     elseif ($min > $cap) { $errores[] = 'El aforo mínimo no puede ser mayor que la capacidad máxima.'; }
     if (!preg_match('/^\d{2}:\d{2}/', $f['hora_apertura']) || !preg_match('/^\d{2}:\d{2}/', $f['hora_cierre']) || $f['hora_apertura'] >= $f['hora_cierre']) { $errores[] = 'El horario de uso no es válido (apertura menor que cierre).'; }
-    $img = guardar_imagen('foto', 'salas', $errImg);
+    $img = guardar_imagen('foto', 'salas/principal', $errImg);
     if ($errImg) { $errores[] = $errImg; }
     if ($img) { $f['imagen_url'] = $img; }
-    $galeria = guardar_imagenes_multiples('fotos', 'salas', $errores);
+    $galeria = guardar_imagenes_multiples('fotos', 'salas/galeria', $errores);
     if (!$errores) {
         $ha = substr($f['hora_apertura'], 0, 5) . ':00'; $hc = substr($f['hora_cierre'], 0, 5) . ':00';
         if ($id > 0) {
@@ -46,9 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'sissiissss', $f['nombre_sala'], (int) $f['id_tipo_sala'], $f['ubicacion'], $f['descripcion'], $cap, $min, $ha, $hc, $f['imagen_url'] ?: null, $f['estado']);
             flash_set('success', 'Sala registrada.');
         }
-        if ($galeria && tabla_existe('tblsala_imagenes')) {
-            $orden = (int) db_una("SELECT COALESCE(MAX(orden), 0) AS n FROM tblsala_imagenes WHERE id_sala = ?", 'i', $idGuardado)['n'];
-            foreach ($galeria as $ruta) { db_exec("INSERT INTO tblsala_imagenes (id_sala, imagen_url, orden) VALUES (?,?,?)", 'isi', $idGuardado, $ruta, ++$orden); }
+        if ($galeria && tabla_existe('tblimagenes_sala')) {
+            foreach ($galeria as $ruta) { db_exec("INSERT INTO tblimagenes_sala (id_sala, url_imagen) VALUES (?,?)", 'is', $idGuardado, $ruta); }
         }
         header('Location: ' . url('admin/salas_abc.php')); exit;
     }
@@ -58,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_GET['editar'])) { $form = db_una("SELECT * FROM tblsalas WHERE id_sala = ?", 'i', (int) $_GET['editar']) ?? $vacio; }
 }
 
-$galeriaActual = ($form['id_sala'] && tabla_existe('tblsala_imagenes')) ? db_todos("SELECT * FROM tblsala_imagenes WHERE id_sala = ? ORDER BY orden, id_imagen", 'i', (int) $form['id_sala']) : [];
+$galeriaActual = ($form['id_sala'] && tabla_existe('tblimagenes_sala')) ? db_todos("SELECT * FROM tblimagenes_sala WHERE id_sala = ? ORDER BY id_imagen", 'i', (int) $form['id_sala']) : [];
 $q = trim($_GET['q'] ?? '');
 $lista = $q !== '' ? db_todos("SELECT s.*, t.nombre_tipo FROM tblsalas s LEFT JOIN tbltipo_sala t ON t.id_tipo_sala = s.id_tipo_sala WHERE s.nombre_sala LIKE ? OR s.ubicacion LIKE ? ORDER BY s.id_sala", 'ss', "%$q%", "%$q%")
                  : db_todos("SELECT s.*, t.nombre_tipo FROM tblsalas s LEFT JOIN tbltipo_sala t ON t.id_tipo_sala = s.id_tipo_sala ORDER BY s.id_sala");
@@ -93,13 +92,13 @@ require_once __DIR__ . '/../includes/header.php';
                     </div>
                     <div class="mb-3"><label class="form-label" for="foto">Fotografía (JPG/PNG/WEBP, máx. 3 MB)</label><input type="file" class="form-control" id="foto" name="foto" accept=".jpg,.jpeg,.png,.webp">
                         <?php if ($form['imagen_url']): ?><div class="form-text">Imagen actual conservada si no subes otra.</div><input type="hidden" name="imagen_url" value="<?= e($form['imagen_url']) ?>"><?php endif; ?></div>
-                    <?php if (tabla_existe('tblsala_imagenes')): ?>
+                    <?php if (tabla_existe('tblimagenes_sala')): ?>
                     <div class="mb-3"><label class="form-label" for="fotos">Fotos adicionales de la galería (varios ángulos)</label>
                         <input type="file" class="form-control" id="fotos" name="fotos[]" accept=".jpg,.jpeg,.png,.webp" multiple>
                         <div class="form-text">Puedes elegir varias a la vez. Se muestran en la vista de detalle de la sala.</div>
                         <?php foreach ($galeriaActual as $g): ?>
                             <div class="d-inline-block position-relative me-2 mt-2">
-                                <img src="<?= e(url_imagen($g['imagen_url'])) ?>" alt="" class="mh-miniatura">
+                                <img src="<?= e(url_imagen($g['url_imagen'])) ?>" alt="" class="mh-miniatura">
                                 <button type="submit" form="formQuitar<?= (int) $g['id_imagen'] ?>" class="btn btn-mh-danger btn-sm py-0 px-1 position-absolute top-0 end-0" style="font-size:.6rem" data-confirm="¿Quitar esta foto?">✕</button>
                             </div>
                         <?php endforeach; ?>
@@ -111,6 +110,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <?php if ($form['id_sala']): ?><button class="btn btn-mh-danger" name="accion" value="baja" type="submit" data-confirm="¿Dar de baja esta sala?">Dar de Baja</button><?php endif; ?>
                     </div>
                     <?php if ($form['id_sala']): ?><a href="<?= url('admin/salas_abc.php') ?>" class="btn btn-link btn-sm w-100 mt-2">Cancelar edición / Nueva sala</a><?php endif; ?>
+                    <?php if ($form['id_sala']): ?><a href="<?= url('admin/galeria_abc.php?sala=' . (int) $form['id_sala']) ?>" class="btn btn-mh-outline btn-sm w-100 mt-1">Administrar carrusel de esta sala</a><?php endif; ?>
                 </form>
                 <?php foreach ($galeriaActual as $g): ?>
                     <form method="POST" id="formQuitar<?= (int) $g['id_imagen'] ?>"><input type="hidden" name="accion" value="quitar_img"><input type="hidden" name="id_sala" value="<?= (int) $form['id_sala'] ?>"><input type="hidden" name="id_imagen" value="<?= (int) $g['id_imagen'] ?>"></form>

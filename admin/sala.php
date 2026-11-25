@@ -1,8 +1,8 @@
 <?php
 /**
  * Detalle de una sala (una página por sala, con varias fotos) — Responsable: Leonel
- * Tablas: tblsalas / tbltipo_sala / tblequipamiento / tblsala_imagenes (galería; ver database/v5_correcciones.sql)
- * Lo ven visitantes y solicitantes. Muestra la imagen principal + miniaturas (varios ángulos), y solo lo esencial.
+ * Tablas: tblsalas / tbltipo_sala / tblequipamiento / tblimagenes_sala (galería; ver database/v5_correcciones.sql)
+ * Lo ven visitantes y solicitantes. Muestra las fotos en un carrusel (la principal + la galería de tblimagenes_sala), y solo lo esencial.
  */
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/funciones.php';
@@ -20,8 +20,11 @@ if (!$s) {
 // Galería: primero la imagen principal (tblsalas.imagen_url) y luego las adicionales ordenadas.
 $fotos = [];
 if ($s['imagen_url']) { $fotos[] = $s['imagen_url']; }
-if (tabla_existe('tblsala_imagenes')) {
-    foreach (db_todos("SELECT imagen_url FROM tblsala_imagenes WHERE id_sala = ? ORDER BY orden, id_imagen", 'i', $id) as $f) { $fotos[] = $f['imagen_url']; }
+if (tabla_existe('tblimagenes_sala')) {
+    $yaEsta = $s['imagen_url'] ? [basename($s['imagen_url'])] : [];
+    foreach (db_todos("SELECT url_imagen FROM tblimagenes_sala WHERE id_sala = ? ORDER BY id_imagen", 'i', $id) as $f) {
+        if (!in_array(basename($f['url_imagen']), $yaEsta, true)) { $fotos[] = $f['url_imagen']; }   // sin repetir la principal
+    }
 }
 $equipo = db_todos("SELECT * FROM tblequipamiento WHERE id_sala = ? AND estado = 'Activo' ORDER BY nombre_equipamiento", 'i', $id);
 $esSolicitante = rol_actual() === ROL_SOLICITANTE;
@@ -36,14 +39,28 @@ require_once __DIR__ . '/includes/header.php';
         <div class="row g-4 mt-1">
             <div class="col-lg-7">
                 <?php if ($fotos): ?>
-                    <img id="fotoPrincipal" src="<?= e(url_imagen($fotos[0])) ?>" alt="<?= e($s['nombre_sala']) ?>" class="mh-galeria-principal mb-2">
-                    <?php if (count($fotos) > 1): ?>
-                        <div class="d-flex flex-wrap gap-2">
+                    <!-- Carrusel de Bootstrap (misma lógica de la práctica del profe): una diapositiva por foto -->
+                    <div id="carruselSala" class="carousel slide mh-carrusel" data-bs-ride="carousel">
+                        <?php if (count($fotos) > 1): ?>
+                            <div class="carousel-indicators">
+                                <?php foreach ($fotos as $i => $f): ?>
+                                    <button type="button" data-bs-target="#carruselSala" data-bs-slide-to="<?= $i ?>"<?= $i === 0 ? ' class="active" aria-current="true"' : '' ?> aria-label="Foto <?= $i + 1 ?>"></button>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                        <div class="carousel-inner">
                             <?php foreach ($fotos as $i => $f): ?>
-                                <img src="<?= e(url_imagen($f)) ?>" alt="Foto <?= $i + 1 ?> de <?= e($s['nombre_sala']) ?>" class="mh-miniatura<?= $i === 0 ? ' activa' : '' ?>" data-foto="<?= e(url_imagen($f)) ?>">
+                                <div class="carousel-item<?= $i === 0 ? ' active' : '' ?>">
+                                    <img src="<?= e(url_imagen($f)) ?>" class="d-block w-100 mh-galeria-principal" alt="Foto <?= $i + 1 ?> de <?= e($s['nombre_sala']) ?>">
+                                </div>
                             <?php endforeach; ?>
                         </div>
-                    <?php endif; ?>
+                        <?php if (count($fotos) > 1): ?>
+                            <button class="carousel-control-prev" type="button" data-bs-target="#carruselSala" data-bs-slide="prev"><span class="carousel-control-prev-icon"></span><span class="visually-hidden">Anterior</span></button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#carruselSala" data-bs-slide="next"><span class="carousel-control-next-icon"></span><span class="visually-hidden">Siguiente</span></button>
+                        <?php endif; ?>
+                    </div>
+                    <?php if (count($fotos) > 1): ?><p class="small text-muted mt-2 mb-0"><?= count($fotos) ?> fotografías · usa las flechas para ver más.</p><?php endif; ?>
                 <?php else: ?>
                     <div class="mh-placeholder-img" style="min-height:320px"><?= icono('image', 32) ?><span>Esta sala aún no tiene fotografías</span></div>
                 <?php endif; ?>
@@ -80,14 +97,4 @@ require_once __DIR__ . '/includes/header.php';
         </div>
     </div>
 </main>
-<script>
-// Al hacer clic en una miniatura se muestra esa foto en grande.
-document.querySelectorAll('.mh-miniatura').forEach(function (m) {
-  m.addEventListener('click', function () {
-    document.getElementById('fotoPrincipal').src = m.getAttribute('data-foto');
-    document.querySelectorAll('.mh-miniatura').forEach(function (x) { x.classList.remove('activa'); });
-    m.classList.add('activa');
-  });
-});
-</script>
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
