@@ -30,5 +30,9 @@ define('APP_EDIFICIO', 'Edificio de Biblioteca UTHH');
 // Estado y zona horaria
 date_default_timezone_set('America/Mexico_City');
 
+// Contraseñas: false = se guardan en texto plano (igual que la app móvil, que comparte la base de datos).
+// Cuando la API móvil use password_verify() se cambia a true y las contraseñas nuevas se guardan cifradas (bcrypt).
+define('CIFRAR_PASSWORDS', false);
+
 // Reglas de negocio (se usan en nueva_solicitud.php)
 define('DIAS_ANTICIPACION', 3);   // mínimo de días naturales entre hoy y la fecha de reserva

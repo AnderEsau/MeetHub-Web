@@ -32,8 +32,20 @@ $opiniones = db_todos("SELECT g.*, s.nombre_sala FROM tblsugerencias g JOIN tblr
                 <div class="mh-stat"><?= $nSalas ?> salas · <?= $nEquipo ?> equipos</div><div class="small mt-2">Catálogo operativo</div></div></div>
             <div class="col-md-3"><div class="mh-card p-3 h-100">
                 <?php if ($esAdmin): ?><div class="small fw-semibold mb-2"><?= icono('people', 16) ?> Usuarios activos</div><div class="mh-stat"><?= $nUsr ?></div><div class="small mt-2">Solicitantes registrados</div>
-                <?php else: ?><div class="small fw-semibold mb-2"><?= icono('globe', 16) ?> Contenido Público (ABC)</div><div class="mh-stat" style="color:var(--mh-brown-text);font-size:1.1rem">Preguntas frecuentes</div><div class="small mt-2"><?= $nMsj ?> mensaje<?= $nMsj === 1 ? '' : 's' ?> de contacto pendiente<?= $nMsj === 1 ? '' : 's' ?></div><?php endif; ?></div></div>
+                <?php else: ?><div class="small fw-semibold mb-2"><?= icono('chat', 16) ?> Mensajes de contacto</div><div class="mh-stat" style="color:var(--mh-brown-text);font-size:1.1rem">Buzón de contacto</div><div class="small mt-2"><?= $nMsj ?> mensaje<?= $nMsj === 1 ? '' : 's' ?> de contacto pendiente<?= $nMsj === 1 ? '' : 's' ?></div><?php endif; ?></div></div>
         </div>
+
+        <section class="mh-card p-3 px-4 mb-3">
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2">
+                <div><h2 class="h6 mh-title mb-1">Contenido público del portal</h2>
+                    <div class="small">Aquí agregas, modificas o das de baja lo que ve el público: quiénes somos, ubicación, políticas y preguntas frecuentes. También están en el pie de página.</div></div>
+                <div class="d-flex flex-wrap gap-2">
+                    <?php foreach (enlaces_pie_contenido_publico(rol_actual()) as $l): ?>
+                        <a href="<?= url($l['url']) ?>" class="btn btn-mh-outline btn-sm"><?= e($l['etiqueta']) ?></a>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </section>
 
         <div class="row g-3">
             <div class="col-lg-7"><section class="mh-card p-4 h-100">

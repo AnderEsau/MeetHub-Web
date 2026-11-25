@@ -15,8 +15,12 @@
  */
 
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/validaciones.php';
 
-/** Verifica contraseña: acepta hash (password_hash) y texto plano (datos de prueba actuales). */
+/**
+ * Verifica contraseña: acepta hash (password_hash) y texto plano (cuentas viejas de la app móvil).
+ * Las contraseñas nuevas pasan por hash_password(): texto plano o bcrypt según CIFRAR_PASSWORDS.
+ */
 function verificar_password(string $ingresada, string $guardada): bool
 {
     if (password_get_info($guardada)['algo'] !== null && password_get_info($guardada)['algo'] !== 0) {
@@ -31,18 +35,10 @@ function nombre_completo(array $f): string
     return trim(($f['nombre'] ?? '') . ' ' . ($f['apellido_paterno'] ?? '') . ' ' . ($f['apellido_materno'] ?? ''));
 }
 
-/** Ejecuta una consulta preparada de 1 parámetro y devuelve la primera fila (o null). */
-function _una_fila(mysqli $conexion, string $sql, string $tipos, ...$params): ?array
+/** Consulta preparada que devuelve la primera fila (o null). Usa los mismos ayudantes db_* de todo el proyecto. */
+function _una_fila(string $sql, string $tipos, ...$params): ?array
 {
-    $stmt = mysqli_prepare($conexion, $sql);
-    if (!$stmt) {
-        return null;
-    }
-    mysqli_stmt_bind_param($stmt, $tipos, ...$params);
-    mysqli_stmt_execute($stmt);
-    $fila = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt)) ?: null;
-    mysqli_stmt_close($stmt);
-    return $fila;
+    return db_una($sql, $tipos, ...$params);
 }
 
 /**
@@ -50,7 +46,7 @@ function _una_fila(mysqli $conexion, string $sql, string $tipos, ...$params): ?a
  * @return array|null ['id'=>int, 'nombre'=>string, 'password'=>string, 'rol'=>ROL_*, 'tipo'=>string] o null
  *   tipo: 'alumno' | 'docente' | 'externo' | 'bibliotecario'  (para saber en qué columna de tblreserva guardar)
  */
-function buscar_usuario_por_identificador(mysqli $conexion, string $ident): ?array
+function buscar_usuario_por_identificador(string $ident): ?array
 {
     $ident = trim($ident);
     if ($ident === '') {
@@ -59,8 +55,7 @@ function buscar_usuario_por_identificador(mysqli $conexion, string $ident): ?arr
     $esNumero = ctype_digit($ident);   // evita que '2025abc' coincida con 2025 por conversión de MySQL
 
     // 1) Bibliotecario / Administrador: entra con su nombre de usuario (tblbibliotecario.usuarios)
-    $f = _una_fila($conexion,
-        "SELECT b.id_bibliotecario AS id, b.psw, b.tipo, t.nombre, t.apellido_paterno, t.apellido_materno
+    $f = _una_fila(        "SELECT b.id_bibliotecario AS id, b.psw, b.tipo, t.nombre, t.apellido_paterno, t.apellido_materno
            FROM tblbibliotecario b
            LEFT JOIN tbltrabajadores t ON t.matricula = b.matricula
           WHERE b.usuarios = ? AND b.activo = 1 LIMIT 1", 's', $ident);
@@ -73,9 +68,9 @@ function buscar_usuario_por_identificador(mysqli $conexion, string $ident): ?arr
 
     // 2) Alumno (correo o matrícula)
     $f = $esNumero
-        ? _una_fila($conexion, "SELECT id_alumno AS id, nombre, apellido_paterno, apellido_materno, psw FROM tblalumnos
+        ? _una_fila("SELECT id_alumno AS id, nombre, apellido_paterno, apellido_materno, psw FROM tblalumnos
                                  WHERE (id_alumno = ? OR correo_electronico = ?) AND activo = 1 LIMIT 1", 'is', (int) $ident, $ident)
-        : _una_fila($conexion, "SELECT id_alumno AS id, nombre, apellido_paterno, apellido_materno, psw FROM tblalumnos
+        : _una_fila("SELECT id_alumno AS id, nombre, apellido_paterno, apellido_materno, psw FROM tblalumnos
                                  WHERE correo_electronico = ? AND activo = 1 LIMIT 1", 's', $ident);
     if ($f) {
         return ['id' => (int) $f['id'], 'nombre' => nombre_completo($f), 'password' => $f['psw'], 'rol' => ROL_SOLICITANTE, 'tipo' => 'alumno'];
@@ -83,16 +78,16 @@ function buscar_usuario_por_identificador(mysqli $conexion, string $ident): ?arr
 
     // 3) Docente / personal (correo o matrícula)
     $f = $esNumero
-        ? _una_fila($conexion, "SELECT matricula AS id, nombre, apellido_paterno, apellido_materno, psw FROM tbltrabajadores
+        ? _una_fila("SELECT matricula AS id, nombre, apellido_paterno, apellido_materno, psw FROM tbltrabajadores
                                  WHERE (matricula = ? OR correo_electronico = ?) AND activo = 1 LIMIT 1", 'is', (int) $ident, $ident)
-        : _una_fila($conexion, "SELECT matricula AS id, nombre, apellido_paterno, apellido_materno, psw FROM tbltrabajadores
+        : _una_fila("SELECT matricula AS id, nombre, apellido_paterno, apellido_materno, psw FROM tbltrabajadores
                                  WHERE correo_electronico = ? AND activo = 1 LIMIT 1", 's', $ident);
     if ($f) {
         return ['id' => (int) $f['id'], 'nombre' => nombre_completo($f), 'password' => $f['psw'], 'rol' => ROL_SOLICITANTE, 'tipo' => 'docente'];
     }
 
     // 4) Externo (correo o RFC)
-    $f = _una_fila($conexion, "SELECT id_externo AS id, nombre, apellido_paterno, apellido_materno, psw FROM tblexterno
+    $f = _una_fila("SELECT id_externo AS id, nombre, apellido_paterno, apellido_materno, psw FROM tblexterno
                                 WHERE (rfc = ? OR correo_electronico = ?) AND activo = 1 LIMIT 1", 'ss', strtoupper($ident), $ident);
     if ($f) {
         return ['id' => (int) $f['id'], 'nombre' => nombre_completo($f), 'password' => $f['psw'], 'rol' => ROL_SOLICITANTE, 'tipo' => 'externo'];
@@ -120,75 +115,76 @@ function separar_nombre_completo(string $completo): ?array
     return [implode(' ', $p), $paterno, $materno];
 }
 
-/** ¿Ya existe una cuenta con ese correo en cualquiera de las 3 tablas de solicitantes? */
-function correo_ya_registrado(mysqli $conexion, string $correo): bool
+/** Preguntas de seguridad disponibles en el registro. */
+const PREGUNTAS_SEGURIDAD = ['¿Nombre de tu primera mascota?', '¿Ciudad donde naciste?', '¿Nombre de tu mejor amigo de la infancia?',
+                             '¿Cuál es tu comida favorita?', '¿Nombre de tu primera escuela?'];
+
+/**
+ * Valor que se guarda en la columna psw. Con CIFRAR_PASSWORDS = false (config/app.php) queda en texto plano, igual que la app móvil;
+ * con true se cifra con bcrypt. verificar_password() entiende las dos formas.
+ */
+function hash_password(string $p): string
 {
-    foreach (['tblalumnos', 'tbltrabajadores', 'tblexterno'] as $t) {
-        if (_una_fila($conexion, "SELECT 1 AS x FROM $t WHERE correo_electronico = ? LIMIT 1", 's', $correo)) {
-            return true;
-        }
-    }
-    return false;
+    return CIFRAR_PASSWORDS ? password_hash($p, PASSWORD_DEFAULT) : $p;
 }
 
 /**
  * Registra un solicitante nuevo (Alumno, Docente o Externo).
  * $datos: tipo, matricula (matrícula o RFC), nombre (completo), correo, telefono, password, pregunta, respuesta
- * @return string|null mensaje de error, o null si se guardó bien
+ * La tabla donde se guarda depende del tipo elegido: alumno -> tblalumnos, docente -> tbltrabajadores, externo -> tblexterno.
+ * @return array lista de errores; vacía si la cuenta se creó bien.
  */
-function registrar_solicitante(mysqli $conexion, array $datos): ?string
+function registrar_solicitante(array $datos): array
 {
-    $partes = separar_nombre_completo($datos['nombre']);
-    if (!$partes) {
-        return 'Escribe tu nombre completo (nombre y al menos un apellido).';
+    $errores = validar_registro($datos, PREGUNTAS_SEGURIDAD);
+    if ($errores) {
+        return $errores;
     }
-    [$nombre, $paterno, $materno] = $partes;
+    [$nombre, $paterno, $materno] = separar_nombre_completo($datos['nombre']);
     $tipo = $datos['tipo'];
     $clave = trim($datos['matricula']);
-    $correo = $datos['correo'];
-    $tel = $datos['telefono'];
-    $psw = $datos['password'];              // TODO(equipo): password_hash($psw, PASSWORD_DEFAULT) si se decide hashear
+    $correo = trim($datos['correo']);
+    $tel = trim($datos['telefono']);
+    $psw = hash_password($datos['password']);
     $preg = $datos['pregunta'];
-    $resp = $datos['respuesta'];
-
-    if (correo_ya_registrado($conexion, $correo)) {
-        return 'Ya existe una cuenta con ese correo electrónico.';
-    }
+    $resp = trim($datos['respuesta']);
 
     if ($tipo === 'externo') {
         $rfc = strtoupper($clave);
-        if (!preg_match('/^[A-Z&Ñ]{3,4}\d{6}[A-Z0-9]{3}$/u', $rfc)) {
-            return 'Escribe un RFC válido (12 o 13 caracteres).';
-        }
-        if (_una_fila($conexion, "SELECT 1 AS x FROM tblexterno WHERE rfc = ? LIMIT 1", 's', $rfc)) {
-            return 'Ya existe una cuenta con ese RFC.';
-        }
-        $inst = 'No especificada';           // tblexterno.institucion es NOT NULL y el mockup no la pide
-        $stmt = mysqli_prepare($conexion,
-            "INSERT INTO tblexterno (rfc, nombre, apellido_paterno, apellido_materno, correo_electronico, telefono, institucion, psw, pregunta_secreta, respuesta_secreta)
-             VALUES (?,?,?,?,?,?,?,?,?,?)");
-        mysqli_stmt_bind_param($stmt, 'ssssssssss', $rfc, $nombre, $paterno, $materno, $correo, $tel, $inst, $psw, $preg, $resp);
+        $inst = 'No especificada';           // tblexterno.institucion es NOT NULL y el formulario no la pide
+        db_exec("INSERT INTO tblexterno (rfc, nombre, apellido_paterno, apellido_materno, correo_electronico, telefono, institucion, psw, pregunta_secreta, respuesta_secreta)
+                 VALUES (?,?,?,?,?,?,?,?,?,?)", 'ssssssssss', $rfc, $nombre, $paterno, $materno, $correo, $tel, $inst, $psw, $preg, $resp);
     } else {
-        if (!ctype_digit($clave)) {
-            return 'La matrícula debe contener solo números.';
-        }
         $matricula = (int) $clave;
         $tabla = $tipo === 'alumno' ? 'tblalumnos' : 'tbltrabajadores';
         $pk = $tipo === 'alumno' ? 'id_alumno' : 'matricula';
-        if (_una_fila($conexion, "SELECT 1 AS x FROM $tabla WHERE $pk = ? LIMIT 1", 'i', $matricula)) {
-            return 'Ya existe una cuenta con esa matrícula.';
-        }
-        $stmt = mysqli_prepare($conexion,
-            "INSERT INTO $tabla ($pk, nombre, apellido_paterno, apellido_materno, correo_electronico, telefono, psw, pregunta_secreta, respuesta_secreta)
-             VALUES (?,?,?,?,?,?,?,?,?)");
-        mysqli_stmt_bind_param($stmt, 'issssssss', $matricula, $nombre, $paterno, $materno, $correo, $tel, $psw, $preg, $resp);
+        db_exec("INSERT INTO $tabla ($pk, nombre, apellido_paterno, apellido_materno, correo_electronico, telefono, psw, pregunta_secreta, respuesta_secreta)
+                 VALUES (?,?,?,?,?,?,?,?,?)", 'issssssss', $matricula, $nombre, $paterno, $materno, $correo, $tel, $psw, $preg, $resp);
     }
+    return [];
+}
 
-    if (!$stmt || !mysqli_stmt_execute($stmt)) {
-        return 'No se pudo crear la cuenta. Intenta de nuevo.';
+/** Texto del tipo de cuenta para mostrar: Alumno | Docente | Externo | Bibliotecario | Administrador. */
+function etiqueta_tipo_usuario(): string
+{
+    $m = ['alumno' => 'Alumno', 'docente' => 'Docente', 'externo' => 'Externo'];
+    $t = $_SESSION['usuario_tipo'] ?? '';
+    if (isset($m[$t])) {
+        return $m[$t];
     }
-    mysqli_stmt_close($stmt);
-    return null;
+    return rol_actual() === ROL_ADMIN ? 'Administrador' : 'Bibliotecario';
+}
+
+/** ¿El solicitante ya completó los datos que se piden antes de reservar (domicilio)? Si la columna aún no existe, no se exige. */
+function perfil_completo(): bool
+{
+    $mapa = ['alumno' => ['tblalumnos', 'id_alumno'], 'docente' => ['tbltrabajadores', 'matricula'], 'externo' => ['tblexterno', 'id_externo']];
+    $t = $_SESSION['usuario_tipo'] ?? '';
+    if (!isset($mapa[$t]) || !columna_existe($mapa[$t][0], 'domicilio')) {
+        return true;
+    }
+    $f = db_una("SELECT domicilio FROM {$mapa[$t][0]} WHERE {$mapa[$t][1]} = ?", 'i', (int) $_SESSION['usuario_id']);
+    return $f && trim((string) $f['domicilio']) !== '';
 }
 
 /**
@@ -234,11 +230,5 @@ function cambiar_password(string $tabla, string $pk, int $id, string $nuevo): vo
     if (($permitidas[$tabla] ?? null) !== $pk) {
         throw new InvalidArgumentException('Tabla no permitida.');
     }
-    db_exec("UPDATE $tabla SET psw = ? WHERE $pk = ?", 'si', $nuevo, $id);   // TODO(equipo): password_hash() si se decide hashear
-}
-
-/** ¿La contraseña cumple la regla del sistema? (mín. 8, letras y números) */
-function password_valida(string $p): bool
-{
-    return (bool) preg_match('/^(?=.*[A-Za-z])(?=.*\d).{8,}$/', $p);
+    db_exec("UPDATE $tabla SET psw = ? WHERE $pk = ?", 'si', hash_password($nuevo), $id);   // según CIFRAR_PASSWORDS
 }

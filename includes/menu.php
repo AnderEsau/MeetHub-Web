@@ -23,28 +23,51 @@ function menu_por_rol(?string $rol): array
                 ['etiqueta' => 'Reportes e historial',   'url' => 'admin/reportes.php'],
                 ['etiqueta' => 'Salas (ABC)',            'url' => 'admin/salas_abc.php'],
                 ['etiqueta' => 'Mobiliario (ABC)',       'url' => 'admin/equipo_abc.php'],
-                ['etiqueta' => 'Contenido Público (ABC)', 'url' => 'admin/faq_abc.php'],
                 ['etiqueta' => 'Mensajes',               'url' => 'admin/mensajes.php'],
             ];
         case ROL_ADMIN:
             return [
                 ['etiqueta' => 'Inicio',                  'url' => 'admin/index.php'],
                 ['etiqueta' => 'Reportes e historial',    'url' => 'admin/reportes.php'],
-                ['etiqueta' => 'Contenido Público (ABC)', 'url' => 'admin/faq_abc.php'],
                 ['etiqueta' => 'Mensajes',                'url' => 'admin/mensajes.php'],
                 ['etiqueta' => 'Usuarios / Roles (ABC)',  'url' => 'admin/usuarios_abc.php'],
             ];
         default:
             return [
-                ['etiqueta' => 'Inicio',               'url' => 'index.php'],
-                ['etiqueta' => 'Disponibilidad',       'url' => 'disponibilidad.php'],
-                ['etiqueta' => 'Salas (Catálogo)',     'url' => 'salas.php'],
-                ['etiqueta' => 'Políticas',            'url' => 'politicas.php'],
-                ['etiqueta' => 'Preguntas frecuentes', 'url' => 'faq.php'],
-                ['etiqueta' => 'Ubicación',            'url' => 'ubicacion.php'],
-                ['etiqueta' => 'Contacto',             'url' => 'contacto.php'],
+                ['etiqueta' => 'Inicio',           'url' => 'index.php'],
+                ['etiqueta' => 'Disponibilidad',   'url' => 'disponibilidad.php'],
+                ['etiqueta' => 'Salas (Catálogo)', 'url' => 'salas.php'],
+                ['etiqueta' => 'Quiénes somos',    'url' => 'quienes_somos.php'],
+                ['etiqueta' => 'Ubicación',        'url' => 'ubicacion.php'],
+                ['etiqueta' => 'Contacto',         'url' => 'contacto.php'],
             ];
     }
+}
+
+/** Enlaces informativos que van en el pie de página (visitante y solicitante): preguntas frecuentes y políticas. */
+function enlaces_pie_publico(): array
+{
+    return [
+        ['etiqueta' => 'Preguntas frecuentes',   'url' => 'faq.php'],
+        ['etiqueta' => 'Política de préstamo',   'url' => 'politica_prestamo.php'],
+        ['etiqueta' => 'Política de cancelación', 'url' => 'politica_cancelacion.php'],
+        ['etiqueta' => 'Política de devolución', 'url' => 'politica_devolucion.php'],
+    ];
+}
+
+/**
+ * Menús para modificar el contenido público. Van en el pie de página (no en la barra superior).
+ * El Administrador ve los 4 módulos; el Bibliotecario solo Preguntas frecuentes (igual que en el motor de ABC).
+ */
+function enlaces_pie_contenido_publico(?string $rol): array
+{
+    $todos = [
+        ['etiqueta' => 'Quiénes somos (Misión, Visión, Calidad)', 'url' => 'admin/datos_empresa_abc.php'],
+        ['etiqueta' => 'Ubicación y fachada',                      'url' => 'admin/ubicacion_abc.php'],
+        ['etiqueta' => 'Políticas (préstamo, cancelación, devolución)', 'url' => 'admin/politicas_abc.php'],
+        ['etiqueta' => 'Preguntas frecuentes',                     'url' => 'admin/faq_abc.php'],
+    ];
+    return $rol === ROL_ADMIN ? $todos : [$todos[3]];
 }
 
 /** Nombre legible del rol para mostrar en el navbar. */

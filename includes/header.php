@@ -11,6 +11,7 @@ require_once __DIR__ . '/funciones.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/iconos.php';
 require_once __DIR__ . '/menu.php';
+require_once __DIR__ . '/usuarios.php';
 
 $titulo = $titulo ?? 'Inicio';
 $rol = rol_actual();
@@ -57,9 +58,10 @@ $privado = usuario_logueado();
                     <div class="dropdown">
                         <button class="btn btn-mh-borde btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <?= icono('user', 14) ?> <?= e(explode(' ', $_SESSION['usuario_nombre'] ?? 'Usuario')[0] . ' ' . (explode(' ', $_SESSION['usuario_nombre'] ?? '')[1] ?? '')) ?>
+                            <span class="mh-rol mh-rol-<?= $rol === ROL_ADMIN ? 'administrador' : e($_SESSION['usuario_tipo'] ?? 'bibliotecario') ?>"><?= e(etiqueta_tipo_usuario()) ?></span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><span class="dropdown-item-text small text-muted">Rol: <?= e(etiqueta_rol($rol)) ?></span></li>
+                            <li><span class="dropdown-item-text small text-muted">Sesión iniciada como: <strong><?= e(etiqueta_tipo_usuario()) ?></strong></span></li>
                             <?php if ($rol === ROL_SOLICITANTE): ?>
                                 <li><a class="dropdown-item" href="<?= url('usuario/mi_perfil.php') ?>"><?= icono('gear', 15) ?> Configuración de cuenta (Mi perfil)</a></li>
                             <?php else: ?>
@@ -69,7 +71,7 @@ $privado = usuario_logueado();
                     </div>
                     <a href="<?= url('logout.php') ?>" class="btn btn-mh btn-sm">Cerrar sesión</a>
                 <?php else: ?>
-                    <a href="<?= url('login.php#crear-cuenta') ?>" class="btn btn-mh btn-sm">Crear cuenta</a>
+                    <a href="<?= url('registro.php') ?>" class="btn btn-mh btn-sm">Crear cuenta</a>
                     <a href="<?= url('login.php') ?>" class="btn btn-light btn-sm fw-semibold">Iniciar sesión</a>
                 <?php endif; ?>
             </div>
