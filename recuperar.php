@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif (mb_strtolower($resp) !== mb_strtolower((string) $cuenta['respuesta'])) {
             $error = 'La respuesta secreta no coincide.';
         } elseif (!password_valida($n1)) {
-            $error = 'La contraseña debe tener mínimo 8 caracteres con letras y números.';
+            $error = MSG_PASSWORD;
         } elseif ($n1 !== $n2) {
             $error = 'Las contraseñas no coinciden.';
         } else {
@@ -76,7 +76,7 @@ require_once __DIR__ . '/includes/header.php';
                     <div class="mb-3">
                         <label class="form-label" for="nueva">Nueva contraseña</label>
                         <input type="password" class="form-control" id="nueva" name="nueva" required>
-                        <div class="form-text">Mín. 8 caracteres, letras y números.</div>
+                        <div class="form-text">Mín. 8 caracteres con letra, número y símbolo especial.</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label" for="confirmar">Confirmar nueva contraseña</label>

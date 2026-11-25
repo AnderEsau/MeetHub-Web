@@ -14,6 +14,7 @@ $aprob = db_una("SELECT COUNT(*) AS n FROM tblreserva WHERE $col = ? AND estado_
         <?php flash_show(); ?>
         <section class="mh-card p-4 mb-3">
             <h1 class="h4 mh-title mb-2">Bienvenido, <?= e($_SESSION['usuario_nombre']) ?></h1>
+            <div class="mb-2"><span class="mh-rol mh-rol-<?= e($_SESSION['usuario_tipo']) ?>" style="margin-left:0">Sesión de <?= e(etiqueta_tipo_usuario()) ?></span></div>
             <p class="small mb-0">Desde tu panel puedes consultar disponibilidad, explorar el catálogo, agendar espacios y gestionar tus reservaciones en la Biblioteca UTHH.</p>
         </section>
         <div class="row g-3">
