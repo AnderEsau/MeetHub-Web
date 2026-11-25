@@ -1,6 +1,6 @@
 <?php
 /**
- * Ubicación y directorio — Responsable: Samantha
+ * Ubicación — Responsable (una sola cosa por página: el contacto está en contacto.php): Samantha
  * Tabla: tblcontenido_publico (modulo = 'Datos'). Apartados usados: 'Dirección física', 'Edificio y área',
  * 'Horario y contacto', 'Portal institucional', 'Fachada' (contenido = ruta de la imagen).
  */
@@ -15,8 +15,8 @@ $fachada = dato_publico('Fachada');
 ?>
 <main class="flex-grow-1 py-4">
     <div class="container" style="max-width:860px">
-        <h1 class="h3 mh-title text-center mb-1">Ubicación y Directorio Institucional</h1>
-        <p class="small text-center mb-4">Conoce la dirección física y horarios de atención del Edificio de Biblioteca UTHH.</p>
+        <h1 class="h3 mh-title text-center mb-1">Ubicación</h1>
+        <p class="small text-center mb-4">Dirección y horario de atención del Edificio de Biblioteca UTHH.</p>
 
         <section class="mh-card p-4">
             <div class="row g-4">
@@ -31,19 +31,12 @@ $fachada = dato_publico('Fachada');
                     <?php endforeach; ?>
                 </div>
                 <div class="col-md-6">
-                    <div class="mh-tint p-4 h-100">
-                        <h2 class="h6 mh-title mb-3">Directorio de Contacto Directo</h2>
-                        <?php if ($fachada && $fachada['contenido'] !== ''): ?>
-                            <img src="<?= e(url_imagen($fachada['contenido'])) ?>" alt="Fachada Biblioteca UTHH" class="mh-img mb-3" style="height:150px">
-                        <?php endif; ?>
-                        <?php foreach ([['phone', 'Teléfono Conmutador', '(789) 896 2088 al 91 · Extensión Biblioteca'], ['mail', 'Correo Electrónico', APP_CORREO], ['globe', 'Portal Institucional', $portal['contenido'] ?? APP_WEB]] as [$ic, $t, $c]): ?>
-                            <div class="d-flex gap-3 mb-3">
-                                <span class="mh-icon"><?= icono($ic, 18) ?></span>
-                                <div><div class="fw-bold small"><?= e($t) ?></div><div class="small"><?= e($c) ?></div></div>
-                            </div>
-                        <?php endforeach; ?>
-                        <a href="<?= url('contacto.php') ?>" class="btn btn-mh-outline w-100 mt-2">Ir al formulario de Contacto →</a>
-                    </div>
+                    <?php if ($fachada && $fachada['contenido'] !== ''): ?>
+                        <img src="<?= e(url_imagen($fachada['contenido'])) ?>" alt="Fachada Biblioteca UTHH" class="mh-img mb-3" style="height:220px">
+                    <?php else: ?>
+                        <div class="mh-placeholder-img mb-3" style="min-height:220px"><?= icono('image', 28) ?><span>Fachada de la Biblioteca UTHH</span></div>
+                    <?php endif; ?>
+                    <a href="<?= url('contacto.php') ?>" class="btn btn-mh-outline w-100">¿Dudas? Ir a Contacto →</a>
                 </div>
             </div>
         </section>
